@@ -157,7 +157,9 @@ class ChessAndCard(Game, DictObservation):
         done = self.is_terminal()
         self.set_n_return()
         if done:
-            print(f'Final payoff = {self.payoff}')
+            pass
+            #modify there
+            #print(f'Final payoff = {self.payoff}')
         return self.all_observes, reward, done, info_before, info_after
 
     def is_valid_action(self, joint_action):

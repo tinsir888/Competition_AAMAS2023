@@ -9,18 +9,67 @@ Notes:
 2. if you want to load .pth file, please follow the instruction here:
 https://github.com/jidiai/ai_lib/blob/master/examples/demo
 """
+import torch
 
-"""
-根据题目给出的observation，我们可以将手牌展开为一个长度为 34 的数组，
-每个元素表示该牌的数量，然后再加上已经打出去的牌，就得到了整副牌的状态。
-"""
+# DQN 模型
+class DQN(torch.nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(input_dim, 128)
+        self.fc2 = torch.nn.Linear(128, 256)
+        self.fc3 = torch.nn.Linear(256, 128)
+        self.fc4 = torch.nn.Linear(128, output_dim)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.relu(self.fc3(x))
+        x = self.fc4(x)
+        return x
+
+# 加载模型
+model = DQN(54,6)
+
+# 设置模型为评估模式
+model.eval()
+
+import argparse
+import os
+from pathlib import Path
+import sys
+
+base_dir = Path(__file__).resolve().parent
+sys.path.append(str(base_dir))
+
+model_path = os.path.dirname(os.path.abspath(__file__)) + "/dqn_model_20000.pt"
+
+#print(model_path)
+
+model.load_state_dict(torch.load(model_path))
+
+sys.path.pop(-1)  # just for safety
+
 def my_controller(observation, action_space, is_act_continuous=False):
     agent_action = []
-    print(observation)
-    for i in range(len(action_space)):
-        action_ = sample_single_dim(action_space[i], is_act_continuous)
-        agent_action.append(action_)
-        #print(action_)
+    state = None
+    #print(observation)
+    if(observation['obs']==None):
+        for i in range(len(action_space)):
+            action_ = sample_single_dim(action_space[i], is_act_continuous)
+            agent_action.append(action_)
+            #print(action_)
+        return agent_action
+    
+    state = torch.tensor(observation['obs']['observation'])
+    
+    q_values = model(torch.tensor(state, dtype=torch.float32))
+    action = q_values.argmax().item()
+    #return action
+    #print(action)
+    my_act = [0,0,0,0,0,0]
+    my_act[action] = 1
+    agent_action.append(my_act)
+    #print(agent_action)
     return agent_action
 
 

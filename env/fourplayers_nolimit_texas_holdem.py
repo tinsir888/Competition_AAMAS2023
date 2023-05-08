@@ -127,11 +127,16 @@ class RLCardBase(AECEnv):
     def step(self, action):
         if self.dones[self.agent_selection]:
             return self._was_done_step(action)
+        
+        #print("!!!in step(self,action)",action,"\n\n\n")
 
         self.action_record[self.agent_selection] = action
         self.last_agent_selection = self.agent_selection
 
         obs, next_player_id = self.env.step(action)
+
+        #print("!!!obs in step(self,action)\n",obs['raw_obs']['current_player'],"\n\n\n")
+        
         next_player = self._int_to_name(next_player_id)
         self._last_obs = self.observe(self.agent_selection)
         if self.env.is_over():
@@ -487,6 +492,8 @@ class FourPlayersNoLimitTexasHoldem(Game, DictObservation):
         done = self.is_terminal()
         self.set_n_return()
         if done:
+            #modify there
+            #pass
             print(f"Final payoff = {self.payoff}")
         return self.all_observes, reward, done, info_before, info_after
 
@@ -523,8 +530,8 @@ class FourPlayersNoLimitTexasHoldem(Game, DictObservation):
             if (np.array(joint_action[current_idx][0]) * self.action_masks_dict[self.env_core.agent_selection]).sum() == 0:
                 # raise Exception(f"The action of player {current_player} has illegal action, "
                 #                 f"input action = {joint_action[current_idx][0]} but the legal action should be {self.action_masks_dict[self.env_core.agent_selection]}")
-                warnings.warn(f"The action of player {current_player} has illegal action, "
-                              f"input action = {joint_action[current_idx][0]} but the legal action should be {self.action_masks_dict[self.env_core.agent_selection]}")
+                #warnings.warn(f"The action of player {current_player} has illegal action, "
+                #              f"input action = {joint_action[current_idx][0]} but the legal action should be {self.action_masks_dict[self.env_core.agent_selection]}")
 
                 action_mask = self.action_masks_dict[self.env_core.agent_selection]
                 rand_action = np.random.multinomial(1, np.array(action_mask) / sum(action_mask))

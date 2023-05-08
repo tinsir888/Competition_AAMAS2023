@@ -27,7 +27,7 @@ def get_players_and_action_space_list(g):
         raise Exception("agent number = %d 不正确，与n_player = %d 不匹配" % (sum(g.agent_nums), g.n_player))
 
     n_agent_num = list(g.agent_nums)
-    print("n_agent_num: ", n_agent_num)
+    #print("n_agent_num: ", n_agent_num)
     for i in range(1, len(n_agent_num)):
         n_agent_num[i] += n_agent_num[i - 1]
 
@@ -55,6 +55,7 @@ def get_joint_action_eval(game, multi_part_agent_ids, policy_list, actions_space
     # [[[0, 0, 0, 1]], [[0, 1, 0, 0]]]
     joint_action = []
     for policy_i in range(len(policy_list)):
+        #print("#\n#\n#\npolicy_i:",(policy_i),"\n\n\n")
 
         if game.obs_type[policy_i] not in obs_type:
             raise Exception("可选obs类型：%s" % str(obs_type))
@@ -63,11 +64,29 @@ def get_joint_action_eval(game, multi_part_agent_ids, policy_list, actions_space
 
         action_space_list = actions_spaces[policy_i]
         function_name = 'm%d' % policy_i
+        
+        #print("?\n?\n?\n",policy_i,":::\n\n",all_observes,"\n\n\n")
+        """
+        if all_observes[policy_i]['obs']:
+            print("###start###\n","policy_list:", policy_list)
+            print("policy_i:",policy_i)
+            print("obs_state",all_observes[policy_i]['obs'])
+            print("actions_space:",actions_space)
+            print("action_space_list:",action_space_list)
+            print("agents_id_list:",agents_id_list,"\n###END###\n\n\n")
+        """
         for i in range(len(agents_id_list)):
             agent_id = agents_id_list[i]
             a_obs = all_observes[agent_id]
+            #print(a_obs)
             each = eval(function_name)(a_obs, action_space_list[i], game.is_act_continuous)
+            #each = [[0,0,0,0,0,0]] if all_observes[policy_i]['obs'] == None else each
+            #each = [[0,0,0,0,0,0]] if i==1 else each
+            #print("each:",each,"\n\n\n\n\n\n\n\n")
             joint_action.append(each)
+
+            #print("?\n?\n?\n",policy_i,":::\n\n",multi_part_agent_ids,"\n#\n#\n#\n", joint_action)
+        #print("#\n#\n#\nhere: ",joint_action)
     return joint_action
 
 
@@ -132,7 +151,9 @@ def run_game(g, env_name, multi_part_agent_ids, actions_spaces, policy_list, ren
         info_dict = {}
         info_dict["time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         joint_act = get_joint_action_eval(g, multi_part_agent_ids, policy_list, actions_spaces, all_observes)
+        #print("!\n!\n!\n",multi_part_agent_ids)
         all_observes, reward, done, info_before, info_after = g.step(joint_act)
+        #print("!!!!\n",all_observes,"\n\n\n\n")
         if env_name.split("-")[0] in ["magent"]:
             info_dict["joint_action"] = g.decode(joint_act)
         if info_before:
@@ -141,6 +162,8 @@ def run_game(g, env_name, multi_part_agent_ids, actions_spaces, policy_list, ren
         if info_after:
             info_dict["info_after"] = info_after
         steps.append(info_dict)
+
+        #print("!\n!\n!\n", all_observes, reward)
 
     game_info["steps"] = steps
     game_info["winner"] = g.check_win()
@@ -165,7 +188,7 @@ if __name__ == "__main__":
                                                                                             'chessandcard-mahjong_v3/'
                                                                                             'bridge')
     parser.add_argument('--render', action='store_true', help='if render the env')
-    parser.add_argument("--my_ai", default="random", help="rl/random")
+    parser.add_argument("--my_ai", default="dp", help="rl/dp")
     parser.add_argument("--opponent", default="random", help="rl/random")
     args = parser.parse_args()
 
@@ -178,4 +201,5 @@ if __name__ == "__main__":
     policy_list = [args.my_ai, args.opponent, args.opponent, args.opponent]
 
     multi_part_agent_ids, actions_space = get_players_and_action_space_list(game)
+    #print(actions_space)
     run_game(game, env_type, multi_part_agent_ids, actions_space, policy_list, render_mode, if_render=True)
